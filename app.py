@@ -13,6 +13,7 @@ import mediapipe as mp
 from utils import CvFpsCalc
 from model import KeyPointClassifier
 from model import PointHistoryClassifier
+from driver import Driver
 
 
 def get_args():
@@ -62,8 +63,10 @@ def main():
     )
 
     keypoint_classifier = KeyPointClassifier()
-
     point_history_classifier = PointHistoryClassifier()
+
+    # driver
+    driver = Driver()
 
     # Read labels ###########################################################
     with open("model/keypoint_classifier/keypoint_classifier_label.csv", encoding="utf-8-sig") as f:
@@ -147,6 +150,16 @@ def main():
                     keypoint_classifier_labels[hand_sign_id],
                     point_history_classifier_labels[most_common_fg_id[0][0]],
                 )
+                if hand_sign_id == 0:
+                    driver.forward()
+                elif hand_sign_id == 1:
+                    driver.stop()
+                elif hand_sign_id == 3:
+                    driver.back()
+                elif hand_sign_id == 4:
+                    driver.left()
+                elif hand_sign_id == 5:
+                    driver.right()
         else:
             point_history.append([0, 0])
 
