@@ -1,0 +1,13 @@
+names:
+- apple
+- cola
+- grape
+nc: 3
+roboflow:
+  license: CC BY 4.0
+  project: fuck_yolo
+  url: https://universe.roboflow.com/project/fuck_yolo/dataset/2
+  version: 2
+  workspace: project
+train: fuck_yolo-2/train/images
+val: fuck_yolo-2/valid/images
