@@ -11,6 +11,7 @@ import mediapipe as mp
 from utils import CvFpsCalc
 from model import KeyPointClassifier
 from driver import Driver
+from simple_socket import make_client, receive
 
 
 def get_args():
@@ -34,6 +35,7 @@ def get_args():
 def main():
     # Argument parsing #################################################################
     args = get_args()
+    client = make_client()
 
     cap_device = args.device
     cap_width = args.width
@@ -96,6 +98,19 @@ def main():
         image.flags.writeable = False
         results = hands.process(image)
         image.flags.writeable = True
+
+        # receive message
+        traffic_light = receive(client)
+        if traffic_light == "cola":
+            driver.stop()
+            continue
+        elif traffic_light == "apple":
+            continue
+        elif traffic_light == "grape":
+            driver.forward()
+            continue
+        else:
+            print("no message received")
 
         #  ####################################################################
         if results.multi_hand_landmarks is not None:

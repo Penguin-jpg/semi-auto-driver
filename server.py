@@ -8,8 +8,11 @@ ADDR = (SERVER, PORT)
 FORMAT = "utf-8"
 DISCONNECT_MESSAGE = "!DISCONNECT"
 
-server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server.bind(ADDR)
+
+def make_server():
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.bind(ADDR)
+    return server
 
 
 def handle_client(conn, addr):
@@ -23,26 +26,27 @@ def handle_client(conn, addr):
             msg = conn.recv(msg_length).decode(FORMAT)
             if msg == DISCONNECT_MESSAGE:
                 connected = False
-
             print(f"[{addr}] {msg}")
             conn.send("Msg received".encode(FORMAT))
 
     conn.close()
 
 
-def start():
+def send(server, message):
+    message = message.encode(FORMAT)
+    msg_length = len(message)
+    send_length = str(msg_length).encode(FORMAT)
+    send_length += b" " * (HEADER - len(send_length))
+    server.send(send_length)
+    server.send(message)
+    print(server.recv(2048).decode(FORMAT))
+
+
+def start(server):
+    print("[STARTING] server is starting...")
     server.listen()
     print(f"[LISTENING] Server is listening on {SERVER}")
-    while True:
-        try:
-            conn, addr = server.accept()
-            thread = threading.Thread(target=handle_client, args=(conn, addr))
-            thread.start()
-            print(f"[ACTIVE CONNECTIONS] {threading.activeCount() - 1}")
-        except KeyboardInterrupt:
-            print("done")
-            break
-
-
-print("[STARTING] server is starting...")
-start()
+    conn, addr = server.accept()
+    thread = threading.Thread(target=handle_client, args=(conn, addr))
+    thread.start()
+    print(f"[ACTIVE CONNECTIONS] {threading.activeCount() - 1}")
