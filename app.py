@@ -10,8 +10,10 @@ import mediapipe as mp
 
 from utils import CvFpsCalc
 from model import KeyPointClassifier
-from driver import Driver
-from simple_socket import make_client, receive
+from simple_socket import make_server, server_start, server_send
+
+SERVER = "192.168.1.5"
+PORT = 5050
 
 
 def get_args():
@@ -35,7 +37,8 @@ def get_args():
 def main():
     # Argument parsing #################################################################
     args = get_args()
-    client = make_client()
+    server = make_server(SERVER, PORT)
+    conn, addr = server_start(server)
 
     cap_device = args.device
     cap_width = args.width
@@ -61,9 +64,6 @@ def main():
         min_tracking_confidence=min_tracking_confidence,
     )
     keypoint_classifier = KeyPointClassifier()
-
-    # driver
-    driver = Driver()
 
     # Read labels ###########################################################
     with open("model/keypoint_classifier/keypoint_classifier_label.csv", encoding="utf-8-sig") as f:
@@ -99,19 +99,6 @@ def main():
         results = hands.process(image)
         image.flags.writeable = True
 
-        # receive message
-        traffic_light = receive(client)
-        if traffic_light == "cola":
-            driver.stop()
-            continue
-        elif traffic_light == "apple":
-            continue
-        elif traffic_light == "grape":
-            driver.forward()
-            continue
-        else:
-            print("no message received")
-
         #  ####################################################################
         if results.multi_hand_landmarks is not None:
             for hand_landmarks, handedness in zip(results.multi_hand_landmarks, results.multi_handedness):
@@ -131,17 +118,16 @@ def main():
                 debug_image = draw_landmarks(debug_image, landmark_list)
 
                 if hand_sign_id == 0:
-                    driver.forward()
+                    server_send(conn, "Forward")
                 elif hand_sign_id == 1:
-                    driver.stop()
+                    server_send(conn, "Stop")
                 elif hand_sign_id == 3:
-                    driver.back()
+                    server_send(conn, "Back")
                 elif hand_sign_id == 4:
-                    driver.left()
+                    server_send(conn, "Left")
                 elif hand_sign_id == 5:
-                    driver.right()
+                    server_send(conn, "Right")
 
-        # debug_image = draw_point_history(debug_image, point_history)
         debug_image = draw_info(debug_image, fps, mode, number)
 
         # Screen reflection #############################################################

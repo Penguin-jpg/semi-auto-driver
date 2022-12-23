@@ -1,5 +1,9 @@
 import RPi.GPIO as GPIO
-import time
+from simple_socket import make_client, client_receive, client_send
+
+SERVER = "192.168.1.5"
+PORT = 5050
+
 
 class Driver:
     def __init__(self, B1=33, A1=35, B2=32, A2=36):
@@ -24,11 +28,11 @@ class Driver:
         GPIO.output(self.A1, GPIO.LOW)
         GPIO.output(self.B2, GPIO.HIGH)
         GPIO.output(self.A2, GPIO.LOW)
-    
+
     def stop(self):
         GPIO.output(self.B1, GPIO.LOW)
         GPIO.output(self.A1, GPIO.LOW)
-        GPIO.output(self.B2, GPIO.LOW)  
+        GPIO.output(self.B2, GPIO.LOW)
         GPIO.output(self.A2, GPIO.LOW)
 
     def back(self):
@@ -44,7 +48,6 @@ class Driver:
         GPIO.output(self.A1, GPIO.LOW)
         GPIO.output(self.B2, GPIO.LOW)
         GPIO.output(self.A2, GPIO.LOW)
-    
 
     def right(self):
         print("right")
@@ -55,3 +58,23 @@ class Driver:
 
     def clear(self):
         GPIO.cleanup()
+
+    def start(self):
+        client = make_client(SERVER, PORT)
+        while True:
+            try:
+                command = client_receive(client)
+                if command == "Forward":
+                    self.forward()
+                elif command == "Stop":
+                    self.stop()
+                elif command == "Back":
+                    self.back()
+                elif command == "Left":
+                    self.left()
+                elif command == "Right":
+                    self.right()
+            except KeyboardInterrupt:
+                self.clear()
+                client_send(client, "DC")
+                break
